@@ -21,13 +21,15 @@
       </div>
     </div>
     <section class="col-md-10 mx-auto col-lg-5 text-start">
-      <form action="/predict" class="p-4 p-md-5 border rounded-3 bg-light">
+      <form id="uploadForm" class="p-4 p-md-5 border rounded-3 bg-light">
         <div class="mb-3">
           <label for="image" class="form-label">Select an image.</label>
-          <input class="form-control" type="file" id="image">
+          <input class="form-control" type="file" id="image" name="image">
         </div>
+        <button type="submit" class="btn btn-dark">Predict</button>
       </form>
     </section>
+    <section class="col-md-10 mx-auto my-3 col-lg-5 d-flex align-items-end" id="uploads"></section>
   </main>
   <footer class="mt-auto py-3 bg-light text-center">
     <div class="container">
@@ -35,5 +37,56 @@
     </div>
   </footer>
 </body>
+
+<script>
+  const form = document.querySelector('#uploadForm');
+  const uploads = document.querySelector('#uploads');
+
+  const base64String = async (image, cb) => {
+    reader = new FileReader();
+    reader.onloadend = () => cb(reader.result);
+    reader.readAsDataURL(image);
+  };
+
+  form.onsubmit = async (event) => {
+    event.preventDefault();
+
+    const formData = new FormData(event.target);
+    const image = formData.get('image');
+    const imageURL = URL.createObjectURL(image);
+
+    const img = document.createElement("img");
+    img.src = imageURL;
+    img.classList.add('img-thumbnail', 'col-3');
+    img.onload = () => URL.revokeObjectURL(this.src);
+    uploads.appendChild(img);
+
+    const request = async (base64Image) => {
+      const image = base64Image.replace('data:image/jpeg;base64,', '');
+      const body = { image };
+
+      const response = await fetch('/predict', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+
+      const data = await response.json();
+      const prediction = data.prediction;
+      const text = document.createElement('p')
+      text.innerHTML = `Prediction: <mark>${prediction}</mark>`;
+      text.classList.add('text-white', 'ms-3', 'mb-0');
+
+      uploads.appendChild(text);
+
+      // clear form
+      form.reset()
+    }
+
+    base64String(image, request)
+  };
+</script>
 
 </html>

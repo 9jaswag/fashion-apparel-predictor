@@ -24,7 +24,7 @@
       <form id="uploadForm" class="p-4 p-md-5 border rounded-3 bg-light">
         <div class="mb-3">
           <label for="image" class="form-label">Select an image.</label>
-          <input class="form-control" type="file" id="image" name="image">
+          <input class="form-control" type="file" id="image" name="image" required>
         </div>
         <button type="submit" class="btn btn-dark">Predict</button>
       </form>
@@ -48,6 +48,20 @@
     reader.readAsDataURL(image);
   };
 
+  const stripMetaData = (encodedImage) => {
+    if (encodedImage.includes('data:image/jpeg;base64,')) {
+      return encodedImage.replace('data:image/jpeg;base64,', '');
+    }
+
+    if (encodedImage.includes('data:image/jpg;base64,')) {
+      return encodedImage.replace('data:image/jpg;base64,', '');
+    }
+
+    if (encodedImage.includes('data:image/png;base64,')) {
+      return encodedImage.replace('data:image/png;base64,', '');
+    }
+  }
+
   form.onsubmit = async (event) => {
     event.preventDefault();
     // clear output
@@ -64,9 +78,7 @@
     uploads.appendChild(img);
 
     const request = async (base64Image) => {
-      let image = base64Image.replace('data:image/jpeg;base64,', '');
-      image = base64Image.replace('data:image/jpg;base64,', '');
-      image = base64Image.replace('data:image/png;base64,', '');
+      const image = stripMetaData(base64Image);
       const body = { image };
 
       const response = await fetch('/predict', {

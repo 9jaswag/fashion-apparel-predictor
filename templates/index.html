@@ -50,6 +50,8 @@
 
   form.onsubmit = async (event) => {
     event.preventDefault();
+    // clear output
+    uploads.replaceChildren();
 
     const formData = new FormData(event.target);
     const image = formData.get('image');
@@ -62,7 +64,9 @@
     uploads.appendChild(img);
 
     const request = async (base64Image) => {
-      const image = base64Image.replace('data:image/jpeg;base64,', '');
+      let image = base64Image.replace('data:image/jpeg;base64,', '');
+      image = base64Image.replace('data:image/jpg;base64,', '');
+      image = base64Image.replace('data:image/png;base64,', '');
       const body = { image };
 
       const response = await fetch('/predict', {

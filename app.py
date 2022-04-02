@@ -11,7 +11,7 @@ app = Flask(__name__)
 print(tf.__version__)
 print(keras.__version__)
 
-model = keras.models.load_model('assets/multi_fashion_apparel_image_classifier.h5')
+model = keras.models.load_model('assets/multi_fashion_apparel_image_classifier', compile=True)
 labels = [
   'T-shirt/top',
   'Trouser',
@@ -25,11 +25,11 @@ labels = [
   'Ankle boot'
 ]
 
-def prepare_image(image):
-  image = image.resize((28, 28))
-  image = keras.preprocessing.image.img_to_array(image)
-  greyscale_image = image[:, :, 0]
-  image = np.expand_dims(greyscale_image, axis=0)
+def prepare_image(decoded_image):
+  image = Image.open(io.BytesIO(decoded_image)).convert('L').resize((28,28))
+  image = np.asarray(image)
+  image = image / 255.0
+  image = np.expand_dims(image, axis=0)
 
   return image
 
@@ -42,11 +42,9 @@ def predict():
   request_body = request.get_json(force = True)
   image_data = request_body['image']
   decoded_image = base64.b64decode(image_data)
-  image = Image.open(io.BytesIO(decoded_image))
-  prepared_image = prepare_image(image)
-  prediction = model.predict(prepared_image)
+  image = prepare_image(decoded_image)
+  prediction = model.predict(image)
   highest_prediction = np.argmax(prediction)
 
-  print(prediction)
   print('predicted: ', labels[highest_prediction])
   return jsonify({ 'prediction': labels[highest_prediction] })
